@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function Header() {
+function Header({ onNavigate }) {
   const [activeSection, setActiveSection] = useState('inicio');
 
   const handleScroll = () => {
@@ -49,22 +49,30 @@ function Header() {
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            {['inicio', 'Licitaciones', 'Proveedores'].map((section, index, array) => (
+            {['inicio', 'BusquedaLicitaciones', 'BusquedaProveedores'].map((section, index, array) => (
               <React.Fragment key={section}>
                 <li className="nav-item">
                   <a
                     className="nav-link"
                     href={`#${section}`}
-                    onClick={cerrar}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (section === 'inicio') {
+                        onNavigate('inicio'); // Navegar a ApiLicitaciones
+                      } else if (section === 'BusquedaProveedores') {
+                        onNavigate('BusquedaProveedores'); // Navegar a Proveedores
+                      } else {
+                        onNavigate(section);
+                      }
+                    }}
                     style={{
                       fontWeight: activeSection === section ? 'bold' : 'normal',
                       fontSize: activeSection === section ? '1.2rem' : '1rem',
                     }}
                   >
                     {section === 'inicio' && 'Inicio'}
-                    {section === 'Licitaciones' && 'Licitaciones'}
-                    {section === 'Proveedores' && 'Proveedores'}
-                    
+                    {section === 'BusquedaLicitaciones' && 'Búsqueda de Licitaciones'}
+                    {section === 'BusquedaProveedores' && 'Búsqueda de Proveedores'}
                   </a>
                 </li>
                 {index < array.length - 1 && (
