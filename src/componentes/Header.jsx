@@ -49,7 +49,7 @@ function Header() {
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            {['inicio', 'sobre-nosotros', 'productos', 'preguntas-frecuentes', 'contacto'].map((section, index, array) => (
+            {['inicio', 'Licitaciones', 'Proveedores'].map((section, index, array) => (
               <React.Fragment key={section}>
                 <li className="nav-item">
                   <a
@@ -62,10 +62,9 @@ function Header() {
                     }}
                   >
                     {section === 'inicio' && 'Inicio'}
-                    {section === 'sobre-nosotros' && 'Quienes Somos'}
-                    {section === 'productos' && 'Productos'}
-                    {section === 'preguntas-frecuentes' && 'Preguntas frecuentes'}
-                    {section === 'contacto' && 'Contacto'}
+                    {section === 'Licitaciones' && 'Licitaciones'}
+                    {section === 'Proveedores' && 'Proveedores'}
+                    
                   </a>
                 </li>
                 {index < array.length - 1 && (
