@@ -161,6 +161,7 @@ function Licitaciones() {
             role="tab"
             aria-controls="buscar-nombre"
             aria-selected="true"
+            onClick={() => setFilteredResults([])} // Limpiar resultados al cambiar de pestaña
           >
             Nombre Licitación
           </button>
@@ -175,6 +176,7 @@ function Licitaciones() {
             role="tab"
             aria-controls="buscar-codigo"
             aria-selected="false"
+            onClick={() => setFilteredResults([])} // Limpiar resultados al cambiar de pestaña
           >
             Código Licitación
           </button>
@@ -189,6 +191,7 @@ function Licitaciones() {
             role="tab"
             aria-controls="buscar-fecha"
             aria-selected="false"
+            onClick={() => setFilteredResults([])} // Limpiar resultados al cambiar de pestaña
           >
             Por Fecha
           </button>
@@ -203,6 +206,7 @@ function Licitaciones() {
             role="tab"
             aria-controls="buscar-estado"
             aria-selected="false"
+            onClick={() => setFilteredResults([])} // Limpiar resultados al cambiar de pestaña
           >
             Por Estado
           </button>
@@ -217,6 +221,7 @@ function Licitaciones() {
             role="tab"
             aria-controls="buscar-fecha-estado"
             aria-selected="false"
+            onClick={() => setFilteredResults([])} // Limpiar resultados al cambiar de pestaña
           >
             Fecha y Estado
           </button>
