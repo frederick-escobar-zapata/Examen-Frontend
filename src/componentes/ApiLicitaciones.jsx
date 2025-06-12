@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import DetalleLicitacion from './DetalleLicitacion'; // Importar el componente DetalleLicitacion
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate para manejar la navegación
 
 const API_SERVICES = 'https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json?ticket=AC3A098B-4CD0-41AF-81A5-41284248419B';
 
 function ApiLicitaciones(){
+    const navigate = useNavigate(); // Inicializa useNavigate
     
     const [dataServices, setDataServices] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -81,8 +83,9 @@ function ApiLicitaciones(){
 
     if (!dataServices || dataServices.length === 0) {
         return (
-            <div className="alert alert-warning text-center" role="alert">
-                No hay datos disponibles para mostrar.
+            <div className="alert alert-danger text-center" role="alert" style={{ fontSize: '1.2rem', padding: '15px' }}>
+                <p>¡Ups! Algo salió mal mientras cargábamos los datos.</p>
+                <p>Por favor, inténtalo nuevamente más tarde.</p>       
             </div>
         ); // Mostrar mensaje si no hay datos
     }
@@ -119,8 +122,11 @@ function ApiLicitaciones(){
     if (selectedCodigoExterno) {
         return (
             <DetalleLicitacion
-                codigoExterno={selectedCodigoExterno}
-                onBack={() => setSelectedCodigoExterno(null)} // Función para volver al listado
+                codigoExterno={selectedCodigoExterno} // Pasa el código externo como propiedad
+                onBack={() => {
+                    console.log("Volviendo al listado desde DetalleLicitacion..."); // Depuración del evento
+                    setSelectedCodigoExterno(null); // Restablece el estado para volver al listado
+                }}
             />
         );
     }
@@ -148,7 +154,10 @@ function ApiLicitaciones(){
                                 <button
                                     type="button"
                                     className="btn btn-link"
-                                    onClick={() => setSelectedCodigoExterno(licitacion.CodigoExterno)}
+                                    onClick={() => {
+                                        console.log("Navegando con CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                                    }}
                                 >
                                     {licitacion.CodigoExterno}
                                 </button>

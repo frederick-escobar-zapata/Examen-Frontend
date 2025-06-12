@@ -53,9 +53,11 @@ function Header() {
             <li className="nav-item">
               <Link className="nav-link" to="/">Inicio</Link>
             </li>
+            <div style={{ borderLeft: '4px solid blue', height: 'auto', margin: '0 10px' }}></div> {/* Línea vertical */}
             <li className="nav-item">
               <Link className="nav-link" to="/BusquedaLicitaciones">Búsqueda de Licitaciones</Link>
             </li>
+            <div style={{ borderLeft: '4px solid blue', height: 'auto', margin: '0 10px' }}></div> {/* Línea vertical */}
             <li className="nav-item">
               <Link className="nav-link" to="/BusquedaProveedores">Búsqueda de Proveedores</Link>
             </li>

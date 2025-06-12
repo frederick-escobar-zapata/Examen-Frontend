@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Asegúrate de importar Bootstrap JS
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate desde react-router-dom
+import DetalleLicitacion from './DetalleLicitacion'; // Asegúrate de importar el componente DetalleLicitacion
+import { validateTextWithAccents, validateCode, validateDate } from '../utils/validations';
+
 const API_SERVICES = 'https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json?ticket=AC3A098B-4CD0-41AF-81A5-41284248419B';
 const API_BASE = 'https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json?'; // Base URL para las solicitudes de licitaciones
 const API_TICKET = 'AC3A098B-4CD0-41AF-81A5-41284248419B'; // Define el ticket como constante
@@ -9,9 +13,10 @@ function Licitaciones() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [nombreFiltro, setNombreFiltro] = useState('');
-  const [codigoFiltro, setCodigoFiltro] = useState(''); // Variable de estado donde se guarda la fecha formateada
+  const [codigoFiltro, setCodigoFiltro] = useState(''); // Cambiar inicialización a cadena vacía
   const [filteredResults, setFilteredResults] = useState([]);
   const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
+  const [selectedCodigoExterno, setSelectedCodigoExterno] = useState(null); // Estado para el Código Externo seleccionado
   const itemsPerPage = 10; // Número de elementos por página
 
   const estados = {
@@ -122,9 +127,29 @@ function Licitaciones() {
     );
   }
 
+  if (selectedCodigoExterno) {
+    return (
+      <DetalleLicitacion
+        codigoExterno={selectedCodigoExterno} // Pasa el código externo como propiedad
+        onBack={() => {
+          console.log("Volviendo al listado desde DetalleLicitacion..."); // Depuración del evento
+          setSelectedCodigoExterno(null); // Restablece el estado para volver al listado
+        }}
+      />
+    );
+  }
+
   return (
     <div className="container mt-5">
-      <h5 className="text-center mb-4" style={{ fontWeight: 'bold', color: '#343a40' }}>Búsqueda de Licitaciones</h5>
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+              Búsqueda de Licitaciones
+            </th>
+          </tr>
+        </thead>
+      </table>
       <ul className="nav nav-tabs mb-4" id="licitacionesTabs" role="tablist">
         <li className="nav-item" role="presentation">
           <button
@@ -168,6 +193,34 @@ function Licitaciones() {
             Por Fecha
           </button>
         </li>
+        <li className="nav-item" role="presentation">
+          <button
+            className="nav-link"
+            id="buscar-estado-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#buscar-estado"
+            type="button"
+            role="tab"
+            aria-controls="buscar-estado"
+            aria-selected="false"
+          >
+            Por Estado
+          </button>
+        </li>
+        <li className="nav-item" role="presentation">
+          <button
+            className="nav-link"
+            id="buscar-fecha-estado-tab"
+            data-bs-toggle="tab"
+            data-bs-target="#buscar-fecha-estado"
+            type="button"
+            role="tab"
+            aria-controls="buscar-fecha-estado"
+            aria-selected="false"
+          >
+            Fecha y Estado
+          </button>
+        </li>
       </ul>
       <div className="tab-content" id="licitacionesTabsContent">
         <div
@@ -185,13 +238,76 @@ function Licitaciones() {
                 className="form-control"
                 placeholder="Ejemplo: Licitación de servicios"
                 value={nombreFiltro}
-                onChange={(e) => setNombreFiltro(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!validateTextWithAccents(value)) {
+                    alert("Caracteres inválidos. Solo se permiten letras, puntos, comas y acentos.");
+                    return;
+                  }
+                  //console.log("Nombre ingresado:", value); // Mostrar el nombre ingresado en la consola
+                  setNombreFiltro(value);
+                }}
               />
             </div>
           </div>
           <div className="text-center mb-4">
-            <button className="btn btn-primary" onClick={handleFilterByName}>Filtrar</button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                const filtered = dataServices.filter((licitacion) =>
+                  licitacion.Nombre.toLowerCase().includes(nombreFiltro.trim().toLowerCase())
+                );
+                console.log("Resultados filtrados por nombre:", filtered); // Mostrar los resultados filtrados en la consola
+                if (filtered.length === 0) {
+                  alert("No se encontraron resultados para el nombre ingresado.");
+                }
+                setFilteredResults(filtered); // Actualiza los resultados filtrados
+              }}
+            >
+              Filtrar
+            </button>
           </div>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  Resultados
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <table className="table table-striped">
+            <thead>
+              <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Código Externo</th>
+                <th>Fecha de Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResults.map((licitacion, index) => (
+                <tr key={index}>
+                  <td>{licitacion.Nombre}</td>
+                  <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
+                  <td>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log("Navegando with CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                      }}
+                      className="btn btn-link"
+                    >
+                      {licitacion.CodigoExterno}
+                    </a>
+                  </td>
+                  <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div
           className="tab-pane fade"
@@ -206,15 +322,63 @@ function Licitaciones() {
                 type="text"
                 id="codigoFiltro"
                 className="form-control"
-                placeholder="Ejemplo: 123456"
-                value={codigoFiltro}
-                onChange={(e) => setCodigoFiltro(e.target.value)}
+                placeholder="Ejemplo: 1019-74-LE25"
+                value={codigoFiltro} // Ahora funciona correctamente como cadena
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!validateCode(value)) {
+                    alert("Código no válido. Solo se permiten letras, números y guiones.");
+                    return;
+                  }
+                  setCodigoFiltro(value);
+                }}
               />
             </div>
           </div>
           <div className="text-center mb-4">
             <button className="btn btn-primary" onClick={handleFilterByCode}>Buscar por Código</button>
           </div>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  Resultados
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <table className="table table-striped">
+            <thead>
+              <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Código Externo</th>
+                <th>Fecha de Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResults.map((licitacion, index) => (
+                <tr key={index}>
+                  <td>{licitacion.Nombre}</td>
+                  <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
+                  <td>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log("Navegando with CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                      }}
+                      className="btn btn-link"
+                    >
+                      {licitacion.CodigoExterno}
+                    </a>
+                  </td>
+                  <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div
           className="tab-pane fade"
@@ -231,9 +395,12 @@ function Licitaciones() {
                 className="form-control"
                 max={new Date().toISOString().split('T')[0]} // Deshabilitar fechas posteriores a la fecha actual
                 onChange={(e) => {
-                  const rawDate = new Date(e.target.value);
-                  const formattedDate = `${String(rawDate.getDate()).padStart(2, '0')}${String(rawDate.getMonth() + 1).padStart(2, '0')}${rawDate.getFullYear()}`;
-                  setCodigoFiltro(formattedDate); // Guardar la fecha formateada en la variable de estado
+                  const value = e.target.value;
+                  if (!validateDate(value)) {
+                    alert("Fecha no válida. No se permiten fechas futuras.");
+                    return;
+                  }
+                  setCodigoFiltro(value);
                 }}
               />
             </div>
@@ -248,15 +415,17 @@ function Licitaciones() {
               className="btn btn-primary"
               onClick={async () => {
                 try {
-                  // Validar que `codigoFiltro` tenga un valor antes de construir la URL
                   if (!codigoFiltro) {
-                    console.error("La fecha formateada no está definida. Por favor, ingrese una fecha válida.");
+                    console.error("La fecha no está definida. Por favor, ingrese una fecha válida.");
                     return;
                   }
 
-                  // Construir correctamente la URL
-                  const apiUrl = `${API_BASE}fecha=${codigoFiltro}&ticket=${API_TICKET}`;
-                  console.log("URL enviada:", apiUrl); // Imprimir la URL por consola
+                  // Formatear la fecha a DDMMYYYY
+                  const formattedDate = codigoFiltro.split('-').reverse().join('');
+                  console.log("Fecha formateada:", formattedDate); // Mostrar la fecha formateada en la consola
+
+                  const apiUrl = `${API_BASE}fecha=${formattedDate}&ticket=${API_TICKET}`;
+                  console.log("URL formada:", apiUrl); // Mostrar la URL formada en la consola
 
                   const response = await fetch(apiUrl, {
                     method: 'GET',
@@ -265,11 +434,6 @@ function Licitaciones() {
                       'Accept': 'application/json',
                     },
                   });
-
-                  if (response.status === 500) { // Usar `response` en lugar de `responseServices`
-                    console.warn("Error 500 detectado. Respuesta omitida."); // Mostrar omisión por consola
-                    return; // Omitir el error y continuar
-                  }
 
                   if (!response.ok) {
                     throw new Error(`Error al consumir la API: ${response.status} ${response.statusText}`);
@@ -286,28 +450,274 @@ function Licitaciones() {
               Buscar por Fecha
             </button>
           </div>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  Resultados
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <table className="table table-striped">
+            <thead>
+              <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Código Externo</th>
+                <th>Fecha de Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResults.map((licitacion, index) => (
+                <tr key={index}>
+                  <td>{licitacion.Nombre}</td>
+                  <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
+                  <td>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log("Navegando with CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                      }}
+                      className="btn btn-link"
+                    >
+                      {licitacion.CodigoExterno}
+                    </a>
+                  </td>
+                  <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div
+          className="tab-pane fade"
+          id="buscar-estado"
+          role="tabpanel"
+          aria-labelledby="buscar-estado-tab"
+        >
+          <div className="row mb-4">
+            <div className="col-md-4">
+              <label htmlFor="estadoFiltro" className="form-label">Seleccione Estado</label>
+              <select
+                id="estadoFiltro"
+                className="form-select"
+                onChange={(e) => {
+                  const estadoSeleccionado = e.target.value;
+                  if (!estadoSeleccionado) {
+                    alert("Por favor, seleccione un estado válido.");
+                    setFilteredResults([]); // Limpia los resultados si no se selecciona un estado
+                    return;
+                  }
+                  console.log("Estado seleccionado:", estadoSeleccionado); // Mostrar el estado seleccionado en la consola
+                  const estadoNombre = estados[estadoSeleccionado] || "Estado desconocido";
+                  const apiUrl = `${API_BASE}estado=${estadoNombre}&ticket=${API_TICKET}`;
+                  console.log("URL formada:", apiUrl); // Mostrar la URL formada en la consola
+                  //alert(`Estado seleccionado: ${estadoNombre}\nURL formada: ${apiUrl}`); // Mostrar el estado y la URL en pantalla
+
+                  const filtered = dataServices.filter(
+                    (licitacion) => licitacion.CodigoEstado.toString() === estadoSeleccionado
+                  );
+                  if (filtered.length === 0) {
+                    alert("No se encontraron resultados para el estado seleccionado.");
+                  }
+                  setFilteredResults(filtered); // Actualiza los resultados filtrados
+                }}
+              >
+                <option value="">Seleccione un estado</option>
+                {Object.entries(estados).map(([codigo, nombre]) => (
+                  <option key={codigo} value={codigo}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  Resultados
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <table className="table table-striped">
+            
+            <thead>
+              
+              <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Código Externo</th>
+                <th>Fecha de Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResults.map((licitacion, index) => (
+                <tr key={index}>
+                  <td>{licitacion.Nombre}</td>
+                  <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
+                  <td>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log("Navegando with CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                      }}
+                      className="btn btn-link"
+                    >
+                      {licitacion.CodigoExterno}
+                    </a>
+                  </td>
+                  <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div
+          className="tab-pane fade"
+          id="buscar-fecha-estado"
+          role="tabpanel"
+          aria-labelledby="buscar-fecha-estado-tab"
+        >
+          <div className="row mb-4">
+            <div className="col-md-4">
+              <label htmlFor="fechaFiltroEstado" className="form-label">Ingrese la Fecha</label>
+              <input
+                type="date"
+                id="fechaFiltroEstado"
+                className="form-control"
+                max={new Date().toISOString().split('T')[0]} // Deshabilitar fechas posteriores a la fecha actual
+                onChange={(e) => {
+                  const value = e.target.value;
+                  console.log("Fecha ingresada:", value); // Mostrar la fecha ingresada en la consola
+                  if (!validateDate(value)) {
+                    alert("Fecha no válida. No se permiten fechas futuras.");
+                    return;
+                  }
+                  setCodigoFiltro((prev) => ({ ...prev, fecha: value })); // Actualiza la propiedad fecha del estado
+                }}
+              />
+            </div>
+            <div className="col-md-4">
+              <label htmlFor="estadoFiltroFecha" className="form-label">Seleccione Estado</label>
+              <select
+                id="estadoFiltroFecha"
+                className="form-select"
+                onChange={(e) => {
+                  const estadoSeleccionado = e.target.value;
+                  console.log("Estado seleccionado:", estadoSeleccionado); // Mostrar el estado seleccionado en la consola
+                  setCodigoFiltro((prev) => ({ ...prev, estado: estadoSeleccionado })); // Actualiza la propiedad estado del estado
+                }}
+              >
+                <option value="">Seleccione un estado</option>
+                {Object.entries(estados).map(([codigo, nombre]) => (
+                  <option key={codigo} value={codigo}>
+                    {nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="text-center mb-4">
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                const { fecha, estado } = codigoFiltro;
+                console.log("Datos ingresados:", { fecha, estado }); // Mostrar los datos ingresados en la consola
+                if (!fecha || !estado) {
+                  alert("Por favor, ingrese una fecha y seleccione un estado.");
+                  return;
+                }
+
+                try {
+                  const formattedDate = fecha
+                    .split('-')
+                    .reverse()
+                    .map((part) => part.padStart(2, '0')) // Asegura que día y mes tengan dos dígitos
+                    .join('');
+                  const estadoNombre = estados[estado] || "Estado desconocido"; // Obtener el nombre del estado
+                  const apiUrl = `${API_BASE}fecha=${formattedDate}&estado=${estadoNombre}&ticket=${API_TICKET}`;
+                  console.log("URL formada:", apiUrl); // Mostrar la URL formada en la consola
+
+                  const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json',
+                    },
+                  });
+
+                  if (!response.ok) {
+                    throw new Error(`Error al consumir la API: ${response.status} ${response.statusText}`);
+                  }
+
+                  const data = await response.json();
+                  console.log("Resultado JSON obtenido:", JSON.stringify(data, null, 2)); // Mostrar el resultado JSON en la consola
+
+                  if (data.Listado && Array.isArray(data.Listado)) {
+                    setFilteredResults(data.Listado); // Actualizar los resultados filtrados
+                  } else {
+                    alert("No se encontraron resultados para los criterios seleccionados.");
+                    setFilteredResults([]); // Limpiar resultados si no hay datos
+                  }
+                } catch (error) {
+                  console.error("Error al consumir la API:", error);
+                  alert("Hubo un error al obtener los datos. Por favor, inténtelo nuevamente.");
+                }
+              }}
+            >
+              Filtrar por Fecha y Estado
+            </button>
+          </div>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  Resultados
+                </th>
+              </tr>
+            </thead>
+          </table>
+          <table className="table table-striped">
+            <thead>
+              <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Código Externo</th>
+                <th>Fecha de Cierre</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredResults.map((licitacion, index) => (
+                <tr key={index}>
+                  <td>{licitacion.Nombre}</td>
+                  <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
+                  <td>
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log("Navegando with CodigoExterno:", licitacion.CodigoExterno); // Depuración del evento
+                        setSelectedCodigoExterno(licitacion.CodigoExterno); // Establece el estado para mostrar DetalleLicitacion
+                      }}
+                      className="btn btn-link"
+                    >
+                      {licitacion.CodigoExterno}
+                    </a>
+                  </td>
+                  <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-      <table className="table table-striped">
-        <thead>
-          <tr style={{ backgroundColor: '#343a40', color: '#ffffff' }}>
-            <th>Nombre</th>
-            <th>Estado</th>
-            <th>Código Externo</th>
-            <th>Fecha de Cierre</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentItems.map((licitacion, index) => (
-            <tr key={index}>
-              <td>{licitacion.Nombre}</td>
-              <td>{estados[licitacion.CodigoEstado] || "Estado desconocido"}</td>
-              <td>{licitacion.CodigoExterno}</td>
-              <td>{licitacion.FechaCierre ? new Date(licitacion.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
       <nav>
         <ul className="pagination justify-content-center">
           {renderPagination()}
