@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
 const API_SERVICES = 'https://api.mercadopublico.cl/servicios/v1/publico/licitaciones.json?';
 const ticket = 'AC3A098B-4CD0-41AF-81A5-41284248419B';
 
-function DetalleLicitacion({ codigoExterno, onBack }) {
-  const [dataServices, setDataServices] = useState(null);
-  const [loading, setLoading] = useState(true);
+function DetalleLicitacion({ onBack }) {
+  const location = useLocation();
+  const { licitacion } = location.state || {}; // Recibe los datos enviados desde Licitaciones
+
+  const [dataServices, setDataServices] = useState(licitacion || null);
+  const [loading, setLoading] = useState(!licitacion);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (licitacion) {
+        setLoading(false);
+        return;
+      }
       try {
         const responseServices = await fetch(API_SERVICES + "codigo=" + codigoExterno + "&ticket=" + ticket, {
           method: 'GET',
@@ -41,7 +50,7 @@ function DetalleLicitacion({ codigoExterno, onBack }) {
       }
     };
     fetchData();
-  }, [codigoExterno]);
+  }, [licitacion]);
 
   if (loading) {
     return (
@@ -68,38 +77,29 @@ function DetalleLicitacion({ codigoExterno, onBack }) {
 
     return (
       <div className="container mt-5">
-        <table className="table table-striped">
-          <thead>
+        <h5 className="text-center mb-4" style={{ fontWeight: 'bold', color: '#343a40' }}>
+          Detalle de la Licitación
+        </h5>
+        <table className="table table-bordered">
+          <tbody>
             <tr>
-              <th colSpan="2" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                Detalle de Licitación
-              </th>
+              <th>Nombre</th>
+              <td>{dataServices.Nombre}</td>
             </tr>
-          </thead>
+            <tr>
+              <th>Estado</th>
+              <td>{dataServices.CodigoEstado}</td>
+            </tr>
+            <tr>
+              <th>Código Externo</th>
+              <td>{dataServices.CodigoExterno}</td>
+            </tr>
+            <tr>
+              <th>Fecha de Cierre</th>
+              <td>{dataServices.FechaCierre ? new Date(dataServices.FechaCierre).toLocaleDateString() : "Fecha no disponible"}</td>
+            </tr>
+          </tbody>
         </table>
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <p><strong>Código Externo:</strong> {dataServices.CodigoExterno}</p>
-            <p><strong>Nombre:</strong> {dataServices.Nombre}</p>
-            <p style={{ textAlign: 'justify' }}><strong>Descripción:</strong>{dataServices.Descripcion}</p>
-            <p><strong>Estado:</strong> {dataServices.Estado}</p>
-            <p><strong>Días para Cierre:</strong> {dataServices.DiasCierreLicitacion}</p>
-            <p><strong>Moneda:</strong> {dataServices.Moneda || 'No especificada'}</p>
-            <p><strong>Cantidad:</strong> {dataServices.Cantidad || 'No especificada'}</p>
-            <p><strong>Reclamos:</strong> {dataServices.Reclamos || 'No especificados'}</p>
-          </div>
-        </div>
-        <div className="card shadow-sm mt-4">
-          <div className="card-body" style={{ textAlign: 'left' }}>
-            <h6 className="card-title mb-4" style={{ fontWeight: 'bold', color: '#007bff' }}>Información del Comprador</h6>
-            <p><strong>Nombre del Organismo:</strong> {dataServices.Comprador?.NombreOrganismo}</p>
-            <p><strong>RUT de la Unidad:</strong> {dataServices.Comprador?.RutUnidad}</p>
-            <p><strong>Nombre de la Unidad:</strong> {dataServices.Comprador?.NombreUnidad}</p>
-            <p><strong>Dirección de la Unidad:</strong> {dataServices.Comprador?.DireccionUnidad}</p>
-            <p><strong>Comuna de la Unidad:</strong> {dataServices.Comprador?.ComunaUnidad}</p>
-            <p><strong>Región de la Unidad:</strong> {dataServices.Comprador?.RegionUnidad}</p>
-          </div>
-        </div>
         <div className="text-center mt-4">
           <button
             type="button"

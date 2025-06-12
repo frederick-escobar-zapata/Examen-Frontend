@@ -131,7 +131,7 @@ function ApiLicitaciones(){
                 <thead>
                     <tr>
                         <th colSpan="4" style={{ backgroundColor: '#343a40', color: '#ffffff', textAlign: 'center', fontSize: '1.5rem', fontWeight: 'bold' }}>
-                            Listado de Licitaciones con Fecha: {anioCreacion} - {cantidad} Licitaciones
+                            Listado de Licitaciones con Fecha: {anioCreacion} - {cantidad} Licitaciones - todos los estados
                         </th>
                     </tr>
                     <tr>

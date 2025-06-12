@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function Header({ onNavigate }) {
+function Header() {
   const [activeSection, setActiveSection] = useState('inicio');
 
   const handleScroll = () => {
@@ -43,50 +44,21 @@ function Header({ onNavigate }) {
       }}
     >
       <div className="container-fluid">
-        <a className="navbar-brand" href="#inicio">Licita Seguro</a>
+        <Link className="navbar-brand" to="/">Licita Seguro</Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span className="navbar-toggler-icon"></span>
         </button>
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
-            {['inicio', 'BusquedaLicitaciones', 'BusquedaProveedores'].map((section, index, array) => (
-              <React.Fragment key={section}>
-                <li className="nav-item">
-                  <a
-                    className="nav-link"
-                    href={`#${section}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (section === 'inicio') {
-                        onNavigate('inicio'); // Navegar a ApiLicitaciones
-                      } else if (section === 'BusquedaProveedores') {
-                        onNavigate('BusquedaProveedores'); // Navegar a Proveedores
-                      } else {
-                        onNavigate(section);
-                      }
-                    }}
-                    style={{
-                      fontWeight: activeSection === section ? 'bold' : 'normal',
-                      fontSize: activeSection === section ? '1.2rem' : '1rem',
-                    }}
-                  >
-                    {section === 'inicio' && 'Inicio'}
-                    {section === 'BusquedaLicitaciones' && 'Búsqueda de Licitaciones'}
-                    {section === 'BusquedaProveedores' && 'Búsqueda de Proveedores'}
-                  </a>
-                </li>
-                {index < array.length - 1 && (
-                  <div
-                    className="d-none d-lg-block"
-                    style={{
-                      borderLeft: '2px solid blue',
-                      height: '1.5rem',
-                      margin: '10px auto 0',
-                    }}
-                  ></div>
-                )}
-              </React.Fragment>
-            ))}
+            <li className="nav-item">
+              <Link className="nav-link" to="/">Inicio</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/BusquedaLicitaciones">Búsqueda de Licitaciones</Link>
+            </li>
+            <li className="nav-item">
+              <Link className="nav-link" to="/BusquedaProveedores">Búsqueda de Proveedores</Link>
+            </li>
           </ul>
         </div>
       </div>
